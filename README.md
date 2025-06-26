@@ -2,8 +2,9 @@
 Data and code associated with Winick and Mitchell 2025
 Included in this repo:
 -  Trait matrix
--  Community matrices with absolute cover
--  Community matrices with relativized cover (** all analyses use relativized cover **)
+-  Community matrices with absolute cover (file names beginning with CoverSep...)
+-  Community matrices with relativized cover (file names beginning with CommunityMatrix...)
+    - ** all analyses use relativized cover **
 -  Code for pivoting relativized community matrices into long-form
 -  Long-form relativized community matrices, formatted for use in the null model
 -  A folder that contains code and output for bootstrapped observed beta diversity values
