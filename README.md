@@ -4,8 +4,8 @@ Included in this repo:
 -  Trait matrix
 -  Community matrices with absolute cover
 -  Community matrices with relativized cover (** all analyses use relativized cover **)
--  Code for pivoting community matrices into long-form
--  Long-form community matrices, formatted for use in the null model
+-  Code for pivoting relativized community matrices into long-form
+-  Long-form relativized community matrices, formatted for use in the null model
 -  A folder that contains code and output for bootstrapped observed beta diversity values
 -  A folder that contains code for the null model
 -  Code for calculating and plotting beta deviations using bootstrapped observed beta diversity and null beta diversity
