@@ -150,3 +150,11 @@ scores %>%
         legend.position="bottom")
 
 dev.off()
+
+# Mean richness and Q
+data.frame(plot=row.names(data), severity=severity, rich=specnumber(data), Q=dbFD(traits, data, scale.RaoQ=T, message=F)$RaoQ) %>%
+  pivot_longer(cols=c(rich,Q), names_to="x", values_to="value") %>%
+  group_by(severity, x) %>%
+  summarise(sd=sd(value), value=mean(value))
+specnumber(data)
+length(x[,colSums(x)>0])
