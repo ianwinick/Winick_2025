@@ -4,7 +4,7 @@ library(tidyverse)
 
 # 2020 data
 data2020 <- read_csv("CommunityMatrix2020.csv") %>%
- column_to_rownames(var="plot")
+  column_to_rownames(var="plot")
 
 Community_longForm_2020 <- data2020 %>%
   rownames_to_column(var="plot") %>%
@@ -42,7 +42,18 @@ Community_longForm_2023 <- data2023 %>%
   select(plot, spp, cover) %>%
   filter(cover>0)
 
+# 2024 data
+data2024 <- read_csv("CommunityMatrix2024.csv") %>%
+  column_to_rownames(var="plot")
+
+Community_longForm_2024 <- data2024 %>%
+  rownames_to_column(var="plot") %>%
+  pivot_longer(cols=-plot, names_to="spp", values_to="cover") %>%
+  select(plot, spp, cover) %>%
+  filter(cover>0)
+
 write.csv(Community_longForm_2020, "Community_longForm_2020.csv", row.names=FALSE)
 write.csv(Community_longForm_2021, "Community_longForm_2021.csv", row.names=FALSE)
 write.csv(Community_longForm_2022, "Community_longForm_2022.csv", row.names=FALSE)
 write.csv(Community_longForm_2023, "Community_longForm_2023.csv", row.names=FALSE)
+write.csv(Community_longForm_2024, "Community_longForm_2024.csv", row.names=FALSE)

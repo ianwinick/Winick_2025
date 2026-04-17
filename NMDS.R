@@ -5,8 +5,8 @@ library(devtools)
 install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
 library(pairwiseAdonis)
 
-# Read in 2023 community and trait data
-data <- read_csv("CommunityMatrix2023.csv") %>%
+# Read in 2024 community and trait data
+data <- read_csv("CommunityMatrix2024.csv") %>%
   column_to_rownames(var="plot")
 
 traits <- read_csv("traitMatrix.csv") %>%

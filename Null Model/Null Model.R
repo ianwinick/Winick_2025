@@ -5,10 +5,10 @@ library(FD)
 ################################################################################
 # Null model which simulates randomized communities based on observed plots.   #
 #                                                                              #
-# Our null model fixes observed plot-level species richness, but allows for    # 
-# random selection of species from the observed species pool at any relative   #
-# abundance. This approach simulates communities devoid of any species         #
-# filtering or assembly rules.                                                 #
+# Our null model fixes observed plot-level species richness and cover values,  # 
+# but allows for random selection of species from the observed species pool.   #
+# This approach simulates communities devoid of any species filtering or       #
+# assembly rules.                                                              #
 #                                                                              #          
 # The model is composed of two functions. The first function simulates a       #
 # single randomized community and provides a null taxonomic and functional     #
@@ -17,6 +17,12 @@ library(FD)
 # Rao's quadratic entropy, scaled from 0 to 1, in an additive partition (see   #          
 # main text for details). The second function iterates the first function,     #
 # providing  n (999) null beta diversity values.                               #
+#                                                                              #
+# PLEASE NOTE!!! This code has sections designed to handle bare plots from the #
+# first year after fire. These sections should be used when applied to the     #
+# first year of data, but should be commented out for all other years.         #
+# Comments pertaining to these sections will begin with "!!!" to help identify #
+# them.                                                                        #
 ################################################################################
 
 ################################################################################
@@ -25,56 +31,45 @@ library(FD)
 
 # x = a community matrix in long form, such that there are three columns: species, plot number, and abundance (cover). 
 # trait = a trait table
-# plots = plots that will be simulated (plot numbers provide species richness constraints and correspond to fire severity class: 1-20 are unburned, 21-40 are low-severity, 41-60 are high-severity)
+# plots = plots that will be simulated (plot numbers provide species richness and cover constraints and correspond to fire severity class: 1-20 are unburned, 21-40 are low-severity, 41-60 are high-severity)
 
 null_beta <- function(x, traits, plots){
   
   # Generate species list from observed species pool, which is represented in the trait table
   Gamma <- as.vector(row.names(traits))
   
-  # Start building data frame with plot numbers. Missing and empty plots are absent.
-  nullModel <- data.frame("Plot" = unique(x$plot))
-  
-  # Generate species richness in each plot
-  Richness <- as.vector(x %>%
-    filter(cover > 0) %>%
-    group_by(plot) %>%
-    summarize(Richness=n()) %>%
-    select(Richness))
-  
-  nullModel <- nullModel %>%
-    cbind(Richness)
+  # Start building data frame with plot numbers and cover values. Missing and empty plots are absent.
+  nullModel <- x %>%
+    select(plot, cover)
   
   # Add column for species and randomly sample from species list according to plot richness. The repeat loop ensures all species in species pool are included, such that gamma diversity remains constant.
   repeat{
     nullModel. <- nullModel %>% # nullModel becomes nullModel. so that nullModel is preserved if Gamma condition is not met.
-      group_by(Plot) %>%
-      mutate(Species=NA, across(Species, ~list(sample(Gamma, size=Richness, replace=F)))) %>%
-      unnest(Species) %>%
+      group_by(plot) %>%
+      mutate(Species=NA) %>%
+      mutate(across(Species, ~sample(Gamma, size=length(plot), replace=F))) %>%
       ungroup()
-    
-    if(length(unique(nullModel.$Species)) == length(Gamma)){break} 
+
+    if(length(unique(nullModel.$Species)) == length(Gamma)){break}
     else (rm(nullModel.))
   }
   
-  # Create vector of random species covers from uniform distribution (0.2 to 100) and bind to data frame.
-  Cover <- as.vector(runif(n=length(nullModel.$Species), 0.2, 100))
-  
-  nullModel. <- nullModel. %>%
-    cbind("Cover"=Cover)
+  # !!! Attach bare plots for 2020 data. Comment this out for all other years
+  # bare <- data.frame("plot"=c(33,42,45,46,48,51,53,56,57), cover=NA, Species=NA)
+  # nullModel. <- nullModel. %>% rbind(bare)
+  # nullModel. <- nullModel.[order(nullModel.$plot),]
   
   # Convert null community data frame into a matrix. Columns are alphabetized by species.
   nullModel. <- nullModel. %>%
-    pivot_wider(names_from=Species, values_from=Cover, values_fill=0)
+    pivot_wider(names_from=Species, values_from=cover, values_fill=0)
   
   nullMatrix <- nullModel. %>% 
-    select(-Richness) %>%
-    column_to_rownames(var="Plot")
+    # select(-"NA") %>% # !!! Comment this out for all other years after 2020
+    column_to_rownames(var="plot")
   
   nullMatrix <- nullMatrix[,order(colnames(nullMatrix))]
   
-  # Relativize using Wisconsin double standardization and extract plots by severity. Missing species (abundance=0 in all selected rows) are removed.
-  nullMatrix <- wisconsin(nullMatrix)
+  # Extract plots by severity. Missing species (abundance=0 in all selected rows) are removed.
   nullMatrix <- nullMatrix %>%
     filter(rownames(.) %in% plots)
   nullMatrix <- nullMatrix[, colSums(nullMatrix != 0) > 0]
@@ -84,12 +79,21 @@ null_beta <- function(x, traits, plots){
     filter(rownames(.) %in% colnames(nullMatrix))
   
   # Compute taxonomic and functional beta diversity
-  betaTAX <- mean(vegdist(nullMatrix, method="bray"))
+  bray <- nullMatrix
+    # mutate(z=0.001) # !!! Add dummy species for 2020. Remove for all other years.
+  betaTAX <- mean(vegdist(bray))
   
+  # !!! Use this version for 2020
+  # rao <- dbFD(traitMatrix, nullMatrix[!rownames(nullMatrix) %in% bare$plot,], scale.RaoQ=T, message=F)$RaoQ
+  # gammaFUN <- dbFD(traitMatrix, colMeans(nullMatrix), scale.RaoQ=T, message=F)$RaoQ
+  # alphaFUN <- mean(c(rao, rep(0, 20-length(rao))))
+  # betaFUN <- gammaFUN-alphaFUN
+  
+  # !!! Use this version for all other years
   gammaFUN <- dbFD(traitMatrix, colMeans(nullMatrix), scale.RaoQ=T, message=F)$RaoQ
   alphaFUN <- mean(dbFD(traitMatrix, nullMatrix, scale.RaoQ=T, message=F)$RaoQ)
   betaFUN <- gammaFUN-alphaFUN
-  
+
   beta <- list("tax"=betaTAX, "fun"=betaFUN)
   
   return(beta)

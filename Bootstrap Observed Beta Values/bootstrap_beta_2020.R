@@ -7,28 +7,46 @@ library(FD)
 # diversity values for the 2020 community data (year 1 after fire)             #
 ################################################################################
 
-data <- read_csv("CommunityMatrix_2020.csv")
+data <- read_csv("CommunityMatrix2020.csv") %>%
+  column_to_rownames(var="plot")
 
 traits <- read_csv("traitMatrix.csv") %>%
   column_to_rownames(var="spp")
 
 data_U <- data %>%
-  filter(rownames(.) %in% 1:20) # Filter plots according to burn severity (Unburned=1:20, Low severity=21:40, High severity=41:60)
+  filter(rownames(.) %in% 1:20) %>% # Filter plots according to burn severity (Unburned=1:20, Low severity=21:40, High severity=41:60)
+  mutate(z=0.001) # Add dummy species to calculate Bray-Curtis for pairs of empty plots. Dummy species is not added to data for functional beta diversity because bare plots are handled differently there.
 data_U <- data_U[, colSums(data_U != 0) > 0] # Remove species not present in plots
-data_U <- data_U[rowSums(data_U != 0) > 0, ] # Remove missing/empty plots
+
 
 # Repeat wrangling for low and high severity
 
 data_L <- data %>%
-  filter(rownames(.) %in% 21:40)
+  filter(rownames(.) %in% 21:40) %>%
+  mutate(z=0.001)
 data_L <- data_L[, colSums(data_L != 0) > 0]
-data_L <- data_L[rowSums(data_L != 0) > 0, ]
 
 data_H <- data %>%
-  filter(rownames(.) %in% 41:60)
+  filter(rownames(.) %in% 41:60) %>%
+  mutate(z=0.001)
 data_H <- data_H[, colSums(data_H != 0) > 0]
-data_H <- data_H[rowSums(data_H != 0) > 0, ]
 
+Qdata <- read_csv("CommunityMatrix2020.csv") %>%
+  column_to_rownames(var="plot")
+
+Qdata_U <- data %>%
+  filter(rownames(.) %in% 1:20)
+Qdata_U <- Qdata_U[, colSums(Qdata_U != 0) > 0]
+
+Qdata_L <- data %>%
+  filter(rownames(.) %in% 21:40)
+Qdata_L <- Qdata_L[, colSums(Qdata_L != 0) > 0]
+Qdata_L <- Qdata_L[rowSums(Qdata_L != 0) > 0, ]
+
+Qdata_H <- data %>%
+  filter(rownames(.) %in% 41:60)
+Qdata_H <- Qdata_H[, colSums(Qdata_H != 0) > 0]
+Qdata_H <- Qdata_H[rowSums(Qdata_H != 0) > 0, ]
 ################################################################################
 # TAXONOMIC BETA DIVERSITY #####################################################
 ################################################################################
@@ -89,8 +107,8 @@ bootH <- data.frame("year"=1, "boot"=1:999, "type"="tax", "severity"="H", "beta"
 traitMatrix <- traits %>%
   filter(rownames(.) %in% colnames(data_U))
 
-Q <- dbFD(traitMatrix, data_U, scale.RaoQ=T, messages=FALSE)$RaoQ # Calculate Rao's quadratic entropy (Q) for observed plots (alpha diversity)
-Qgamma <- dbFD(traitMatrix, colMeans(data_U), scale.RaoQ=T, messages=FALSE)$RaoQ # Calculate Q for the whole community (gamma diversity)
+Q <- dbFD(traitMatrix, Qdata_U, scale.RaoQ=T, messages=FALSE)$RaoQ # Calculate Rao's quadratic entropy (Q) for observed plots (alpha diversity)
+Qgamma <- dbFD(traitMatrix, colMeans(Qdata_U), scale.RaoQ=T, messages=FALSE)$RaoQ # Calculate Q for the whole community (gamma diversity)
 
 # Resample functional beta diversity 999 times.
 Qboot = NULL
@@ -108,8 +126,9 @@ Q_bootU <- data.frame("year"=1, "boot"=1:999, "type"="fun", "severity"="U", "bet
 traitMatrix <- traits %>%
   filter(rownames(.) %in% colnames(data_L))
 
-Q <- dbFD(traitMatrix, data_L, scale.RaoQ=T, messages=FALSE)$RaoQ
-Qgamma <- dbFD(traitMatrix, colMeans(data_L), scale.RaoQ=T, messages=FALSE)$RaoQ
+Q <- dbFD(traitMatrix, Qdata_L, scale.RaoQ=T, messages=FALSE)$RaoQ
+Q <- c(Q, 0)
+Qgamma <- dbFD(traitMatrix, colMeans(Qdata_L), scale.RaoQ=T, messages=FALSE)$RaoQ
 
 Qboot = NULL
 for(i in 1:999){
@@ -120,11 +139,13 @@ for(i in 1:999){
 Q_bootL <- data.frame("year"=1, "boot"=1:999, "type"="fun", "severity"="L", "beta"=Qboot)
 
 # High Severity
+
 traitMatrix <- traits %>%
   filter(rownames(.) %in% colnames(data_H))
 
-Q <- dbFD(traitMatrix, data_H, scale.RaoQ=T, messages=FALSE)$RaoQ
-Qgamma <- dbFD(traitMatrix, colMeans(data_H), scale.RaoQ=T, messages=FALSE)$RaoQ
+Q <- dbFD(traitMatrix, Qdata_H, scale.RaoQ=T, messages=FALSE)$RaoQ
+Q <- c(Q, rep(0,8))
+Qgamma <- dbFD(traitMatrix, colMeans(Qdata_H), scale.RaoQ=T, messages=FALSE)$RaoQ
 
 Qboot = NULL
 for(i in 1:999){

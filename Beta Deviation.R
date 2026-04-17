@@ -54,8 +54,13 @@ deviation %>%
   facet_wrap(~factor(type, levels=c("Taxonomic", "Functional")), ncol=2) +
   scale_linetype_manual(values=c("solid", "dotdash", "dotted")) + 
   scale_color_manual(values=c("cadetblue3", "darkgoldenrod3", "black")) +
-  scale_y_continuous(breaks=seq(-40,10,2),
-                     labels = c(-40, rep("",4),
+  scale_y_continuous(breaks=seq(-90,10,2),
+                     labels = c(-90, rep("",4),
+                                -80, rep("",4),
+                                -70, rep("",4),
+                                -60, rep("",4),
+                                -50, rep("",4),
+                                -40, rep("",4),
                                 -30, rep("",4),
                                 -20, rep("",4),
                                 -10, rep("",4),
@@ -87,8 +92,11 @@ summary(lin_tax)
 summary(lin_fun)
 summary(qua_tax)
 summary(qua_fun)
+write.csv(data.frame(summary(qua_tax)$coefficients), "qua_tax.csv")
+write.csv(data.frame(summary(qua_fun)$coefficients), "qua_fun.csv")
 
 AIC(lin_tax)
 AIC(lin_fun)
 AIC(qua_tax)
 AIC(qua_fun)
+

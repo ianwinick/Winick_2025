@@ -4,9 +4,10 @@ boot2020 <- read_csv("Bootstrap Observed Beta Values/bootstrap_2020.csv")
 boot2021 <- read_csv("Bootstrap Observed Beta Values/bootstrap_2021.csv")
 boot2022 <- read_csv("Bootstrap Observed Beta Values/bootstrap_2022.csv")
 boot2023 <- read_csv("Bootstrap Observed Beta Values/bootstrap_2023.csv")
+boot2024 <- read_csv("Bootstrap Observed Beta Values/bootstrap_2024.csv")
 
 # Bind all bootstrap data frames together (2020-2023)
-data <- rbind(boot2020, boot2021, boot2022, boot2023) %>%
+data <- rbind(boot2020, boot2021, boot2022, boot2023, boot2024) %>%
   mutate(severity=factor(severity, levels=c("U", "L", "H")))
 
 # Export bound data frame
