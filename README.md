@@ -1,5 +1,5 @@
-# Winick_2025
-Data and code associated with Winick and Mitchell 2025
+# Winick_2026
+Data and code associated with Winick and Mitchell 2026
 Included in this repo:
 -  Trait matrix
 -  Community matrices with absolute cover (file names beginning with "CoverSep")
