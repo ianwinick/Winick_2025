@@ -17,4 +17,6 @@ Plot numbers and the burn severity gradient:
 -  Unburned (U)        1-20
 -  Low severity (L)    21-40
 -  High severity (H)   41-60
+
+Plots that are empty or missing are omitted from the community matrices, but are accounted for in analyses.
 Plot numbers and row numbers may not necessarily align when plots are empty or missing.
